@@ -17,6 +17,11 @@ class GMAIL_CLIENT:
    
     m_creds = None
 
+    def __init__(self, grab= False) -> None:
+        
+        self.creds = self.grab_credentials() if self.m_creds == None and grab else self.m_creds # on init of object, grab credentials
+
+
     def grab_credentials(self) -> any:
         """
             @author : Brandon Wright - Barnold88
@@ -94,4 +99,48 @@ class GMAIL_CLIENT:
             print(f"An error occurred: {error}")
 
 
+    def get_recent_emails(self, max_results=5) -> None:
+        """
+            Fetches and displays the most recent emails along with their metadata (like date and timestamp).
 
+            :param max_results: Number of recent emails to retrieve (default: 5)
+            :return: None
+        """
+        self.creds = self.grab_credentials() if self.m_creds == None else self.m_creds
+
+        try:
+            # create gmail api client
+            service = build("gmail", "v1", credentials=self.creds)
+
+            # Fetch the most recent emails using 'messages.list'
+            results = service.users().messages().list(userId="me", maxResults=max_results).execute()
+            messages = results.get('messages', [])
+
+            if not messages:
+                print("No new emails found.")
+                return
+
+            print(f"Recent {max_results} Emails:\n")
+            for message in messages:
+                # Get the individual message details
+                msg = service.users().messages().get(userId="me", id=message["id"]).execute()
+                payload = msg.get("payload", {})
+                headers = payload.get("headers", [])
+
+                subject = ""
+                from_email = ""
+                date = ""
+
+                # Extract subject, from address, and date from headers
+                for header in headers:
+                    if header["name"] == "Subject":
+                        subject = header["value"]
+                    if header["name"] == "From":
+                        from_email = header["value"]
+                    if header["name"] == "Date":
+                        date = header["value"]
+
+                print(f"From: {from_email}\nSubject: {subject}\nDate: {date}\n")
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
