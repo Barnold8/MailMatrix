@@ -5,8 +5,7 @@ class Email:
     m_platform  = None # Where this Email came from
     m_timeStamp = None # What time was this email sent
 
-
-    def __init__(self, sender, subject, platform, timestamp) -> None:
+    def __init__(self, sender= None, subject = None, platform=None, timestamp= None) -> None:
 
         self.m_sender    = sender
         self.m_subject   = subject
