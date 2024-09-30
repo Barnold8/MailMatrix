@@ -11,7 +11,7 @@ from Email import *
 
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-KEYS = "keys/"
+KEYS = "../keys/"
 
 
 class GMAIL_CLIENT:
@@ -35,7 +35,8 @@ class GMAIL_CLIENT:
 
             :return: credentials (not sure of type, type hint of "any")
         """
-    
+        creds = None
+
         if os.path.exists(f"{KEYS}token.json"):
             creds = Credentials.from_authorized_user_file(f"{KEYS}token.json", SCOPES)
 

@@ -1,14 +1,13 @@
-# from Gmail import *
-import pandas
+import check # does all the dependency checking
+from Gmail import *
 
 
-def main():
+if __name__ == "__main__":
+    gclient = GMAIL_CLIENT()
 
-    if __name__ == "__main__":
-        with open("startup.bool","r") as file:
-            pass
+    for email in gclient.get_recent_emails():
+        print(email)
 
-# gclient = GMAIL_CLIENT()
 
-# for email in gclient.get_recent_emails():
-#     print(email)
+
+
