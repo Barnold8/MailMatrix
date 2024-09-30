@@ -14,6 +14,16 @@ class Email:
         self.m_timeStamp = timestamp
         self.m_labels    = labels
 
+    def __str__(self) -> str:
+        return (
+            f"Sender: {self.m_sender}\n"
+            f"Subject: {self.m_subject}\n"
+            f"Platform: {self.m_platform}\n"
+            f"Timestamp: {self.m_timeStamp}\n"
+            f"Labels: {self.m_labels}\n"
+        )
+
+
     # SETTERS
 
     def setSender(self,sender):
