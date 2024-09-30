@@ -4,13 +4,15 @@ class Email:
     m_subject   = None # What the subject is 
     m_platform  = None # Where this Email came from
     m_timeStamp = None # What time was this email sent
+    m_labels    = None # A set of the labels associated with the email
 
-    def __init__(self, sender= None, subject = None, platform=None, timestamp= None) -> None:
+    def __init__(self, sender = None, subject = None, platform = None, timestamp = None, labels = None) -> None:
 
         self.m_sender    = sender
         self.m_subject   = subject
         self.m_platform  = platform
         self.m_timeStamp = timestamp
+        self.m_labels    = labels
 
     # SETTERS
 
@@ -25,6 +27,9 @@ class Email:
 
     def setTimeStamp(self, timeStamp):
         self.m_timeStamp = timeStamp
+
+    def setLabels(self, labels):
+        self.m_labels = labels
 
     # SETTERS
 
@@ -42,5 +47,8 @@ class Email:
     def getTimeStamp(self) -> any:
         return self.m_timeStamp
 
+    def getLabels(self) -> any:
+        return self.m_labels
+    
     # GETTERS
         
