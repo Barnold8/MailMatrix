@@ -1,7 +1,13 @@
+import check # does all the dependency checking
 from Gmail import *
 
 
-gclient = GMAIL_CLIENT()
+if __name__ == "__main__":
+    gclient = GMAIL_CLIENT()
 
-for email in gclient.get_recent_emails():
-    print(email)
+    for email in gclient.get_recent_emails():
+        print(email)
+
+
+
+
