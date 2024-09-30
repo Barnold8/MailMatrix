@@ -10,7 +10,7 @@ class Email:
         self.m_sender    = sender
         self.m_subject   = subject
         self.m_platform  = platform
-        self.m_timeStamp = platform
+        self.m_timeStamp = timestamp
 
     # SETTERS
 
