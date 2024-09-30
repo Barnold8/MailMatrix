@@ -7,6 +7,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from Email import *
 
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -99,14 +100,16 @@ class GMAIL_CLIENT:
             print(f"An error occurred: {error}")
 
 
-    def get_recent_emails(self, max_results=5) -> None:
+    def get_recent_emails(self, max_results=5) -> list[Email]:
         """
-            Fetches and displays the most recent emails along with their metadata (like date and timestamp).
+        Fetches and returns the most recent emails along with their metadata (like date, timestamp, and labels).
 
-            :param max_results: Number of recent emails to retrieve (default: 5)
-            :return: None
+        :param max_results: Number of recent emails to retrieve (default: 5)
+        :return: List of Email objects
         """
         self.creds = self.grab_credentials() if self.m_creds == None else self.m_creds
+
+        emails = []
 
         try:
             # create gmail api client
@@ -118,7 +121,11 @@ class GMAIL_CLIENT:
 
             if not messages:
                 print("No new emails found.")
-                return
+                return []
+
+            # Get all available labels for the user (to map labelIds to actual label names)
+            labels_response = service.users().labels().list(userId="me").execute()
+            label_map = {label['id']: label['name'] for label in labels_response.get('labels', [])}
 
             print(f"Recent {max_results} Emails:\n")
             for message in messages:
@@ -126,6 +133,7 @@ class GMAIL_CLIENT:
                 msg = service.users().messages().get(userId="me", id=message["id"]).execute()
                 payload = msg.get("payload", {})
                 headers = payload.get("headers", [])
+                label_ids = msg.get("labelIds", [])  # Only the labels for this email
 
                 subject = ""
                 from_email = ""
@@ -140,7 +148,22 @@ class GMAIL_CLIENT:
                     if header["name"] == "Date":
                         date = header["value"]
 
-                print(f"From: {from_email}\nSubject: {subject}\nDate: {date}\n")
+                # Map labelIds to label names for this specific email
+                label_names = [label_map.get(label_id, label_id) for label_id in label_ids]
+
+                # Create Email object and append to list
+                emails.append(
+                    Email(
+                        from_email,
+                        subject,
+                        "G-mail",
+                        date,
+                        label_names
+                    )
+                )
+
+            return emails
 
         except HttpError as error:
             print(f"An error occurred: {error}")
+            return []

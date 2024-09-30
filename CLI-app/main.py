@@ -1,6 +1,7 @@
-from gmail import *
+from Gmail import *
 
 
 gclient = GMAIL_CLIENT()
 
-gclient.get_recent_emails()
+for email in gclient.get_recent_emails():
+    print(email)
