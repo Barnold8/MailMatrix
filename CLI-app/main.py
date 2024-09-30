@@ -1,7 +1,14 @@
-from Gmail import *
+# from Gmail import *
+import pandas
 
 
-gclient = GMAIL_CLIENT()
+def main():
 
-for email in gclient.get_recent_emails():
-    print(email)
+    if __name__ == "__main__":
+        with open("startup.bool","r") as file:
+            pass
+
+# gclient = GMAIL_CLIENT()
+
+# for email in gclient.get_recent_emails():
+#     print(email)
