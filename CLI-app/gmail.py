@@ -1,17 +1,31 @@
 import google.auth
+import base64
 import os
+from email.message import EmailMessage
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from Email import *
 
 
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+SCOPES = [
+"https://www.googleapis.com/auth/gmail.addons.execute",
+"https://www.googleapis.com/auth/script.external_request",
+"https://www.googleapis.com/auth/gmail.addons.current.message.action",
+"https://www.googleapis.com/auth/gmail.addons.current.action.compose",
+"https://www.googleapis.com/auth/gmail.compose",
+"https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
+"https://www.googleapis.com/auth/gmail.readonly",
+"https://www.googleapis.com/auth/gmail.modify",
+"https://mail.google.com/"
+]
+
 KEYS = "../keys/"
+
+from googleapiclient.errors import HttpError
 
 
 class GMAIL_CLIENT:
@@ -100,7 +114,6 @@ class GMAIL_CLIENT:
         except HttpError as error:
             print(f"An error occurred: {error}")
 
-
     def get_recent_emails(self, max_results=5) -> list[Email]:
         """
         Fetches and returns the most recent emails along with their metadata (like date, timestamp, and labels).
@@ -128,7 +141,6 @@ class GMAIL_CLIENT:
             labels_response = service.users().labels().list(userId="me").execute()
             label_map = {label['id']: label['name'] for label in labels_response.get('labels', [])}
 
-            print(f"Recent {max_results} Emails:\n")
             for message in messages:
                 # Get the individual message details
                 msg = service.users().messages().get(userId="me", id=message["id"]).execute()
@@ -168,3 +180,40 @@ class GMAIL_CLIENT:
         except HttpError as error:
             print(f"An error occurred: {error}")
             return []
+
+    def make_draft(self,_to,_from,_subject,contents):
+
+        self.creds = self.grab_credentials() if self.m_creds == None else self.m_creds
+
+        try:
+            # create gmail api client
+            service = build("gmail", "v1", credentials=self.creds)
+
+            message = EmailMessage()
+
+            message.set_content(contents)
+
+            message["To"] = _to
+            message["From"] =  _from
+            message["Subject"] = _subject
+
+            # encoded message
+            encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+            create_message = {"message": {"raw": encoded_message}}
+            
+            draft = (
+                service.users()
+                .drafts()
+                .create(userId="me", body=create_message)
+                .execute()
+            )
+
+            # print(f'Draft id: {draft["id"]}\nDraft message: {draft["message"]}')
+
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            draft = None
+
+        return draft
+
