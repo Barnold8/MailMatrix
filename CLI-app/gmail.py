@@ -36,7 +36,6 @@ class GMAIL_CLIENT:
         
         self.creds = self.grab_credentials() if self.m_creds == None and grab else self.m_creds # on init of object, grab credentials
 
-
     def grab_credentials(self) -> Credentials:
         """
             @author : Brandon Wright - Barnold88
@@ -181,8 +180,15 @@ class GMAIL_CLIENT:
             print(f"An error occurred: {error}")
             return []
 
-    def make_draft(self,_to,_from,_subject,contents):
+    def make_draft(self,_to,_from,_subject,contents) -> EmailMessage:
+        """
+            @author: Brandon Wright - Barnold8
+        
+            This function generates a draft which is then saved to the users' gmail drafts
 
+            :return: EmailMessage - Object pertaining to the Email
+
+        """
         self.creds = self.grab_credentials() if self.m_creds == None else self.m_creds
 
         try:
