@@ -1,0 +1,8 @@
+keys/*
+CLI-app/pyvenv.cfg
+CLI-app/__pycache__
+CLI-app/include
+CLI-app/Lib
+CLI-app/Scripts
+CLI-app/startup.txt
+todo.txt
