@@ -37,7 +37,7 @@ class GMAIL_CLIENT:
         self.creds = self.grab_credentials() if self.m_creds == None and grab else self.m_creds # on init of object, grab credentials
 
 
-    def grab_credentials(self) -> any:
+    def grab_credentials(self) -> Credentials:
         """
             @author : Brandon Wright - Barnold88
 
