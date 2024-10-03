@@ -25,7 +25,6 @@ SCOPES = [
 
 KEYS = "../keys/"
 
-from googleapiclient.errors import HttpError
 
 
 class GMAIL_CLIENT:
@@ -180,7 +179,7 @@ class GMAIL_CLIENT:
             print(f"An error occurred: {error}")
             return []
 
-    def make_draft(self,_to,_from,_subject,contents) -> EmailMessage:
+    def make_mail(self,_to,_from,_subject,_contents, _send=False) -> EmailMessage:
         """
             @author: Brandon Wright - Barnold8
         
@@ -192,34 +191,46 @@ class GMAIL_CLIENT:
         self.creds = self.grab_credentials() if self.m_creds == None else self.m_creds
 
         try:
-            # create gmail api client
+            
             service = build("gmail", "v1", credentials=self.creds)
-
             message = EmailMessage()
 
-            message.set_content(contents)
+            message.set_content(_contents)
 
             message["To"] = _to
-            message["From"] =  _from
+            message["From"] = _from
             message["Subject"] = _subject
 
             # encoded message
             encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-            create_message = {"message": {"raw": encoded_message}}
-            
-            draft = (
-                service.users()
-                .drafts()
-                .create(userId="me", body=create_message)
-                .execute()
-            )
+            send_message = None
 
-            # print(f'Draft id: {draft["id"]}\nDraft message: {draft["message"]}')
+            # create_message needs to differ due to the structure needed for sending emails vs making drafts
+            if _send == True:
+                create_message = {"raw": encoded_message}
+                send_message = (
+                    service.users()
+                    .messages()
+                    .send(userId="me", body=create_message)
+                    .execute()
+                )
+            else:
+                create_message = {"message": create_message}
+                send_message = (
+                    service.users()
+                    .drafts()
+                    .create(userId="me", body=create_message)
+                    .execute()
+                )
+
+            print(f'Message Id: {send_message["id"]}')
 
         except HttpError as error:
             print(f"An error occurred: {error}")
-            draft = None
 
-        return draft
+
+        return send_message
+
+
 
