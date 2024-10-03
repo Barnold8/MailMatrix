@@ -18,7 +18,7 @@ import time
 #TODO: Change from access token to refresh token
 #TODO: Modularise code to make it useable and accessible
 #TODO: Adhere to Email datatype, grab relevant information from email so it can be used in the rest of the software
-
+#TODO: Store auth token user side (Make it secure somehow)
 
 class Outlook:
 
@@ -35,27 +35,55 @@ class Outlook:
         client_id = self.settings['clientId'] # Application ID 
         tenant_id = self.settings['tenantId'] # User type
 
-        graph_scopes = self.settings['graphUserScopes'].split(' ')
+        graph_scopes = self.settings['graphUserScopes'].split(' ') # What the application is allowed to do
 
-        self.device_code_credential = DeviceCodeCredential(client_id, tenant_id=tenant_id)
-        self.user_client = GraphServiceClient(self.device_code_credential, graph_scopes)
+        self.device_code_credential = DeviceCodeCredential(client_id, tenant_id=tenant_id) # Authenticator flow
+        self.user_client = GraphServiceClient(self.device_code_credential, graph_scopes)   # Object to communicate with Outlook API via Graph
 
         self.access_token = None
         self.token_expiry = 0
 
-    async def get_user_token(self):
+    async def get_user_token(self) -> None:
+
+        """
+            @author: Brandon Wright - Barnold8
+
+            This function manages token gathering and caching. 
+
+            If there is no token (or the auth token has expired), it will prompt the user to log in given a link and a code, this is Microsoft's OAuth.
+
+            :return: None
+
+            NOTE: This function is called to be called within every other function that interacts with the OutlookAPI, this is to ensure the token is correct and useable.
+
+            NOTE: The line "token_response = self.device_code_credential.get_token(graph_scopes)" is where the token gathered from the user is actually used.
+                  This is a note because it took me way too long to figure that out...
+        
+        """
 
         # Check if the current token is still valid
         if self.access_token is None or time.time() >= self.token_expiry:
+
             graph_scopes = self.settings['graphUserScopes']
-            token_response = self.device_code_credential.get_token(graph_scopes)  # this is where the access token is actually used (passed to)
-            self.access_token = token_response.token
-            self.token_expiry = time.time() + token_response.expires_on - 60  # Refresh 1 minute before expiry
+            token_response = self.device_code_credential.get_token(graph_scopes)  # This is where the access token is actually used (passed to)
+            self.access_token = token_response.token                              # Set the access token to the latest one locally
+            self.token_expiry = time.time() + token_response.expires_on - 60      # Reset expiration timer on the auth token
 
-       
+    async def get_user(self): 
 
-    async def get_user(self):
+        """
+            @author: Brandon Wright - Barnold8
+
+            This function grabs the user that pertains to the authenticated login token.
+
+            This allows the program to get things like the users' name or their E-Mail address among other things.
+
+            :return: user - An object with informational attributes pertaining to the user, e.g. name, email ect 
+        
+        """
+
         await self.get_user_token()
+
         query_params = UserItemRequestBuilder.UserItemRequestBuilderGetQueryParameters(
             select=['displayName', 'mail', 'userPrincipalName']
         )
@@ -64,15 +92,29 @@ class Outlook:
         )
 
         user = await self.user_client.me.get(request_configuration=request_config)
+
         return user
 
-    async def get_inbox(self):
+    async def get_inbox(self,email_count = 1):
+        # TODO: Add a way to choose selections and orderby. Also add a way to choose what mailbox to pick from other than the hardcoded "inbox"
+        """
+            @author: Brandon Wright - Barnold8
 
+            This function gets the users' emails from their inbox up to "email_count" emails. 
+
+            :param email_count: This is an integer that determines how many emails are to be gathered from the users' inbox. Defaulted to 1 for simplicity
+
+            :return: messages - An object that holds all of the retrieved Emails for the inbox and other miscellaneous information.
+
+            NOTE: To get an array of the Emails, you need to access ".value" for the returned object
+        
+        """
+        
         await self.get_user_token()
 
         query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
             select=['from', 'isRead', 'receivedDateTime', 'subject'],
-            top=25,
+            top=email_count,
             orderby=['receivedDateTime DESC']
         )
         request_config = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(
@@ -81,10 +123,27 @@ class Outlook:
 
         messages = await self.user_client.me.mail_folders.by_mail_folder_id('inbox').messages.get(
             request_configuration=request_config)
+        
         return messages
 
     async def send_mail(self, subject: str, body: str, recipient: str):
-        token = await self.get_user_token()
+
+        """
+            @author: Brandon Wright - Barnold8
+
+            This function generates a Message object to send to an Email address
+
+            :param subject:     This is the subject line to include within the email
+
+            :param body:        This is the body of the Email, this function does not support attachments
+
+            :param recipient:   This is the recipient of the Email, this is where the Email is going to be sent
+
+            :return: None
+        
+        """
+        
+        await self.get_user_token()
         message = Message()
         message.subject = subject
 
@@ -158,7 +217,7 @@ async def display_access_token(graph: Outlook):
     print('User token:', token, '\n')
 
 async def list_inbox(graph: Outlook):
-    message_page = await graph.get_inbox()
+    message_page = await graph.get_inbox(25)
     if message_page and message_page.value:
         for message in message_page.value:
             print('Message:', message.subject)
