@@ -2,7 +2,6 @@
 import asyncio
 import configparser
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
-from Outlook.Graph import Graph
 from configparser import SectionProxy
 from azure.identity import DeviceCodeCredential
 from msgraph import GraphServiceClient
@@ -59,7 +58,7 @@ async def main():
     print(config)
     azure_settings = config['azure']
 
-    graph: Outlook = Graph(azure_settings)
+    graph: Outlook = Outlook(azure_settings)
 
     await greet_user(graph)
 
@@ -97,24 +96,27 @@ async def main():
                 print(odata_error.error.code, odata_error.error.message)
 
 
+async def greet_user(graph: Outlook):
+    user = await graph.get_user()
+    if user:
+        print('Hello,', user.display_name)
+        # For Work/school accounts, email is in mail property
+        # Personal accounts, email is in userPrincipalName
+        print('Email:', user.mail or user.user_principal_name, '\n')
 
-async def greet_user(graph: Graph):
-    # TODO
-    return
-
-async def display_access_token(graph: Graph):
+async def display_access_token(graph: Outlook):
     token = await graph.get_user_token()
     print('User token:', token, '\n')
 
-async def list_inbox(graph: Graph):
+async def list_inbox(graph: Outlook):
     # TODO
     return
 
-async def send_mail(graph: Graph):
+async def send_mail(graph: Outlook):
     # TODO
     return
 
-async def make_graph_call(graph: Graph):
+async def make_graph_call(graph: Outlook):
     # TODO
     return
 
