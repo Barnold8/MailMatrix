@@ -1,5 +1,5 @@
 import check # does all the dependency checking
-from Gmail import *
+from GMail.Gmail import *
 
 
 if __name__ == "__main__":
