@@ -5,5 +5,8 @@ CLI-app/include
 CLI-app/Lib
 CLI-app/Scripts
 CLI-app/startup.txt
+CLI-app/DataTypes/__pycache__
+CLI-app/GMail/__pycache__
 CLI-app/Outlook/config.cfg
+CLI-app/Outlook/__pycache__
 todo.txt
