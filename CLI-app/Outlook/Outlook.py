@@ -48,6 +48,41 @@ class Outlook:
         user = await self.user_client.me.get(request_configuration=request_config)
         return user
 
+    async def get_inbox(self):
+        query_params = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(
+            # Only request specific properties
+            select=['from', 'isRead', 'receivedDateTime', 'subject'],
+            # Get at most 25 results
+            top=25,
+            # Sort by received time, newest first
+            orderby=['receivedDateTime DESC']
+        )
+        request_config = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(
+            query_parameters= query_params
+        )
+
+        messages = await self.user_client.me.mail_folders.by_mail_folder_id('inbox').messages.get(
+                request_configuration=request_config)
+        return messages
+
+    async def send_mail(self, subject: str, body: str, recipient: str):
+        message = Message()
+        message.subject = subject
+
+        message.body = ItemBody()
+        message.body.content_type = BodyType.Text
+        message.body.content = body
+
+        to_recipient = Recipient()
+        to_recipient.email_address = EmailAddress()
+        to_recipient.email_address.address = recipient
+        message.to_recipients = []
+        message.to_recipients.append(to_recipient)
+
+        request_body = SendMailPostRequestBody()
+        request_body.message = message
+
+        await self.user_client.me.send_mail.post(body=request_body)
 
 
 async def main():
@@ -55,7 +90,6 @@ async def main():
     # Load settings
     config = configparser.ConfigParser()
     config.read(['Outlook/config.cfg', 'Outlook/config.dev.cfg'])
-    print(config)
     azure_settings = config['azure']
 
     graph: Outlook = Outlook(azure_settings)
@@ -109,12 +143,34 @@ async def display_access_token(graph: Outlook):
     print('User token:', token, '\n')
 
 async def list_inbox(graph: Outlook):
-    # TODO
-    return
+    message_page = await graph.get_inbox()
+    if message_page and message_page.value:
+        # Output each message's details
+        for message in message_page.value:
+            print('Message:', message.subject)
+            if (
+                message.from_ and
+                message.from_.email_address
+            ):
+                print('  From:', message.from_.email_address.name or 'NONE')
+            else:
+                print('  From: NONE')
+            print('  Status:', 'Read' if message.is_read else 'Unread')
+            print('  Received:', message.received_date_time)
+
+        # If @odata.nextLink is present
+        more_available = message_page.odata_next_link is not None
+        print('\nMore messages available?', more_available, '\n')
 
 async def send_mail(graph: Outlook):
-    # TODO
-    return
+    # Send mail to the signed-in user
+    # Get the user for their email address
+    user = await graph.get_user()
+    if user:
+        user_email = user.mail or user.user_principal_name
+
+        await graph.send_mail('Testing Microsoft Graph', 'Hello world!', user_email or '')
+        print('Mail sent.\n')
 
 async def make_graph_call(graph: Outlook):
     # TODO
